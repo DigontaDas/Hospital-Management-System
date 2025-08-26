@@ -1,4 +1,5 @@
 .MODEL SMALL
+
  
 .STACK 100H
 
@@ -33,32 +34,35 @@ registermsg5 db 10,13,'Patient is Successfully Registered ! $'
 age_error db 10,13,'Error: Please enter exactly 2 digits for age! $'
 gender_error db 10,13,'Error: Please enter M or F only! $'
     
-;display messages
-name_display db 10,13,'Name: $'
-age_display db 10,13,'Age: $'
-gender_display db 10,13,'Gender: $'
-blood_display db 10,13,'Blood Type: $'
-id_display db 10,13,'Patient ID: $'
+
 NEWLINE DB 0DH,0AH,'$' 
 SPCAE DB "$"
 
 ;patient data    
-    
-PATIENT_NAME DB 30 DUP(0), '$'
+MAX_PATIENT DB 5    
+PATIENT_NAME DB MAX_PATIENT*30 DUP(0), '$'
 PATIENT_AGE DB 0
 PATIENT_GENDER DB 0   ;M OR F
-PATIENT_BLOOD  DB 4 DUP(0),'$' ; A+ OR O+ OR AB+
-PATIENT_ID DW 1001   ; auto generated patient ID
+PATIENT_BLOOD  DB MAX_PATIENT*4 DUP(0),'$' ; A+ OR O+ OR AB+
+PATIENT_ID DW 1001   
 
 ; Temporary variables for current operation
-TEMP_NAME DB 30 DUP(0), '$'
+TEMP_NAME DB MAX_PATIENT*30 DUP(0), '$'
 TEMP_AGE DB 0
 TEMP_GENDER DB 0, '$'
-TEMP_BLOOD DB 10 DUP(0), '$'
+TEMP_BLOOD DB MAX_PATIENT*30 DUP(0), '$'
 TEMP_ID DW 0
 TEMP_ID_STR DB 6 DUP(0), '$'
 
 .CODE
+macro clearScreen clear1   
+    call newLine
+    call newLine
+    printString clear1
+    call newLine
+endm
+
+
 MAIN PROC
 
 ; initialize DS
@@ -71,10 +75,15 @@ MENU:
 
 LEA DX, MAIN_MENU
 MOV AH,9
-INT 21H 
+INT 21H
+ 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;                                                                   ;
+;                      REGISTER                        ;
+;                                                                   ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-REGISTER:
-   
+REGISTER:   
 GEN_ID:
 MOV AX,PATIENT_ID
 MOV TEMP_ID, AX
@@ -181,7 +190,7 @@ BLOOD_LOOP:
 MOV AH,1
 INT 21H
 CMP AL, 13
-JE NAME_DONE
+JE EXIT
 CMP CX,9
 JGE BLOOD_LOOP
 MOV [SI],AL
@@ -191,16 +200,12 @@ JMP BLOOD_LOOP
 
 
 
-NAME_DONE:
-;LEA DX,NEWLINE
-;MOV AH,9
-;INT 21H
-;MOV AH, 9
-;LEA DX, PATIENT_NAME
-;INT 21H  
+  
 
 ;exit to DOS
-               
+EXIT: 
+
+
 MOV AX,4C00H
 INT 21H
 
