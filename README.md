@@ -1,5 +1,5 @@
 # Hospital-Management-System
-A application for hospital management system in Assembly language
+A hospital management system in Assembly language
 Hospital Patient Management:  
 1. Register patient (Patient will give name, age, gender, blood type for registration); 
 2. Disease Select (Patient will select some diseases the hospital faces or they can give their if they know)
