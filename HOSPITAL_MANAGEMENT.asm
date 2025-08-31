@@ -8,12 +8,12 @@
 ; declare variables here
 ;MENU Prompts      
 main_menu db 10,13,'========================= HOSPITAL MANAGEMENT SYSTEM ===========================$'
-menu1 db '1. Register New Patient$'
-menu2 db '2. Disease Select$'
-menu3 db '3. Discharge$'
-menu4 db '4. Patient Details$'
-menu5 db '5. Report$'
-menu6 DB '6. Exit$'
+menu1 db 10,13,'1. Register New Patient$'
+menu2 db 10,13,'2. Disease Select$'
+menu3 db 10,13,'3. Discharge$'
+menu4 db 10,13,'4. Patient Details$'
+menu5 db 10,13,'5. Report$'
+menu6 DB 10,13,'6. Exit$'
 
 menuerror db 'Wrong input. Please try again$'  
 menu_prompt db 'Enter a choice: $'
@@ -22,6 +22,7 @@ input db ?
 ;CLEAR
 clear db '#XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX#$'
     
+;;;;;;;;;;;;;;;;;;;;;;Variables;;;;;;;;;;;;;;;;;;;
 
 ;register patient
 registermsg1 db 10,13,'1. Enter Patient Name (ENTER TO END): $'   
@@ -29,39 +30,65 @@ registermsg2 db 10,13,'2. Enter Patient Age: $'
 registermsg3 db 10,13,'3. Enter Patient Gender (M/F) : $' 
 registermsg4 db 10,13,'4. Enter Patient Blood Type (ENTER TO END) : $'    
 registermsg5 db 10,13,'Patient is Successfully Registered ! $'    
+registration_complete db 10,13,'Press any key to return to main menu...$'
 
 ; Error messages
 age_error db 10,13,'Error: Please enter exactly 2 digits for age! $'
 gender_error db 10,13,'Error: Please enter M or F only! $'
+no_patient_error db 10,13,'Error: Please register a patient first!$'
     
+; Disease Selection Messages
+disease_menu db 10,13,'========================= DISEASE SELECTION ===========================$'
+disease1 db 10,13,'1. Fever$'
+disease2 db 10,13,'2. Cold/Flu$'
+disease3 db 10,13,'3. Headache$'
+disease4 db 10,13,'4. Stomach Pain$'
+disease5 db 10,13,'5. Heart Problem$'
+disease6 db 10,13,'6. Diabetes$'
+disease7 db 10,13,'7. Other (Specify)$'
+disease_prompt db 10,13,'Select disease (1-7): $'
+other_disease_msg db 10,13,'Enter disease name: $'
+disease_selected_msg db 10,13,'Disease selected successfully!$'
+disease_error db 10,13,'Invalid choice! Please select 1-7.$'
 
 NEWLINE DB 0DH,0AH,'$' 
-SPCAE DB "$"
+SPCAE DB "$"       
 
+;;;;;;;;;;;;;;;;;;;;;DATA STORE;;;;;;;;;;;;;;;;;;;;
 ;patient data    
 MAX_PATIENT DB 5    
 PATIENT_NAME DB MAX_PATIENT*30 DUP(0), '$'
 PATIENT_AGE DB 0
 PATIENT_GENDER DB 0   ;M OR F
 PATIENT_BLOOD  DB MAX_PATIENT*4 DUP(0),'$' ; A+ OR O+ OR AB+
-PATIENT_ID DW 1001   
+PATIENT_ID DW 1001 
+PATIENT_REGISTERED DB 0 ;REG OR NOT  
 
-; Temporary variables for current operation
-TEMP_NAME DB MAX_PATIENT*30 DUP(0), '$'
-TEMP_AGE DB 0
-TEMP_GENDER DB 0, '$'
-TEMP_BLOOD DB MAX_PATIENT*30 DUP(0), '$'
-TEMP_ID DW 0
-TEMP_ID_STR DB 6 DUP(0), '$'
+;disease data
+DISEASE_ARRAY DB 'Fever          $'
+              DB 'Cold/Flu       $'  
+              DB 'Headache       $'
+              DB 'Stomach Pain   $'
+              DB 'Heart Problem  $'
+              DB 'Diabetes       $'
+
 
 .CODE
-macro clearScreen clear1   
-    call newLine
-    call newLine
-    printString clear1
-    call newLine
-endm
 
+NEWLINE_PROC PROC
+    LEA DX, NEWLINE
+    MOV AH, 9
+    INT 21H
+    RET
+NEWLINE_PROC ENDP  
+
+CLEAR_SCREEN PROC
+    CALL NEWLINE_PROC
+    LEA DX, CLEAR
+    MOV AH, 9
+    INT 21H
+    RET
+CLEAR_SCREEN ENDP
 
 MAIN PROC
 
@@ -72,11 +99,61 @@ MOV DS,AX
  
 ; enter your code here
 MENU:
-
+CALL CLEAR_SCREEN
 LEA DX, MAIN_MENU
 MOV AH,9
 INT 21H
- 
+LEA DX, MENU1
+MOV AH,9
+INT 21H
+    
+LEA DX, MENU2
+MOV AH,9
+INT 21H
+    
+LEA DX, MENU3
+MOV AH,9
+INT 21H
+    
+LEA DX, MENU4
+MOV AH,9
+INT 21H
+    
+LEA DX, MENU5
+MOV AH,9
+INT 21H
+    
+LEA DX, MENU6
+MOV AH,9
+INT 21H
+
+CALL NEWLINE_PROC
+LEA DX, MENU_PROMPT
+MOV AH,9
+INT 21H 
+;CHOICES
+MOV AH,1
+INT 21H
+MOV INPUT, AL
+CMP AL, '1'
+JE REGISTER
+CMP AL, '2'
+JE DISEASE_SELECT
+CMP AL, '6'
+JE EXIT
+;ERROR
+LEA DX, MENUERROR
+MOV AH,9
+INT 21H      
+
+CALL NEWLINE_PROC
+LEA DX, REGISTRATION_COMPLETE
+MOV AH,9
+INT 21H
+MOV AH,1
+INT 21H
+JMP MENU
+     
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
 ;                                                                   ;
 ;                      REGISTER                        ;
@@ -86,7 +163,6 @@ INT 21H
 REGISTER:   
 GEN_ID:
 MOV AX,PATIENT_ID
-MOV TEMP_ID, AX
 INC PATIENT_ID
 
 NAME:
@@ -198,7 +274,23 @@ INC SI
 INC CX
 JMP BLOOD_LOOP 
 
+REGISTRATION_SUCCESS:
+MOV PATIENT_REGISTERED, 1  
+LEA DX, REGISTERMSG5
+MOV AH,9
+INT 21H
+CALL NEWLINE_PROC
+LEA DX, REGISTRATION_COMPLETE
+MOV AH,9
+INT 21H
+MOV AH,1
+INT 21H
+JMP MENU
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
+;                      DISEASE SELECTION                              ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+DISEASE_SELECT:
 
   
 
